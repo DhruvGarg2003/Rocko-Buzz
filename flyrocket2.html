@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    .scene {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      background: #01070a;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .scene i {
+      position: absolute;
+      top: -250px;
+      background: rgba(255,255,255,0.5);
+      animation: animateStars linear infinite;
+    }
+    @keyframes animateStars {
+      0% {
+        transform: translateY(0);
+      }
+      100% {
+        transform: translateY(200vh);
+      }
+    }
+    .rocket {
+      position: relative;
+      animation: animate 0.2s ease infinite;
+    }
+    @keyframes animate {
+      0%,100% {
+        transform: translateY(-2px);
+      }
+      50% {
+        transform: translateY(2px);
+      }
+    }
+    .rocket::before {
+      content: '';
+      position: absolute;
+      bottom: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 200px;
+      background: linear-gradient(#00d0ff,transparent);
+    }
+    .rocket::after {
+      content: '';
+      position: absolute;
+      bottom: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 200px;
+      background: linear-gradient(#00d0ff,transparent);
+      filter: blur(20px);
+    }
+    .bullet {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      background: yellow;
+    }
+    .obstacle {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: red;
+    }
+    .score {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: white;
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+<div class="scene">
+  <div class="rocket">
+    <img src="https://raw.githubusercontent.com/TheSyntaxStudio/public/main/assets/images/rocket.png">
+  </div>
+  <div class="score">Score: <span id="score">0</span></div>
+</div>
+
+<script>
+  let score = 0;
+
+  function stars() {
+    const count = 50;
+    const scene = document.querySelector('.scene');
+    for (let i = 0; i < count; i++) {
+      const star = document.createElement('i');
+      const x = Math.floor(Math.random() * window.innerWidth);
+      const duration = Math.random() * 1;
+      const h = Math.random() * 100;
+      star.style.left = x + 'px';
+      star.style.width = 1 + 'px';
+      star.style.height = 50 + h + 'px';
+      star.style.animationDuration = duration + 's';
+      scene.appendChild(star);
+    }
+  }
+  stars();
+
+  const rocket = document.querySelector('.rocket');
+  const scene = document.querySelector('.scene');
+  const scoreDisplay = document.getElementById('score');
+
+  scene.addEventListener('mousemove', function(event) {
+    const rocketWidth = rocket.offsetWidth;
+    const rocketHeight = rocket.offsetHeight;
+    const sceneRect = scene.getBoundingClientRect();
+    const mouseX = event.clientX - sceneRect.left;
+    const mouseY = event.clientY - sceneRect.top;
+
+    const newX = Math.max(0, Math.min(scene.offsetWidth - rocketWidth, mouseX - rocketWidth / 2));
+    const newY = Math.max(0, Math.min(scene.offsetHeight - rocketHeight, mouseY - rocketHeight / 2));
+
+    rocket.style.left = newX + 'px';
+    rocket.style.top = newY + 'px';
+  });
+
+  document.addEventListener('keydown', function(event) {
+    if (event.key === ' ') {
+      const rocketRect = rocket.getBoundingClientRect();
+      const bullet = document.createElement('div');
+      bullet.classList.add('bullet');
+      bullet.style.left = (rocketRect.left + rocketRect.width / 2 - 2.5) + 'px';
+      bullet.style.top = (rocketRect.top - 5) + 'px';
+      scene.appendChild(bullet);
+      
+      const bulletMove = setInterval(() => {
+        const bulletRect = bullet.getBoundingClientRect();
+        if (bulletRect.top <= 0) {
+          clearInterval(bulletMove);
+          bullet.remove();
+        } else {
+          bullet.style.top = (bulletRect.top - 5) + 'px';
+        }
+
+        const obstacles = document.querySelectorAll('.obstacle');
+        obstacles.forEach(obstacle => {
+          const obstacleRect = obstacle.getBoundingClientRect();
+          if (
+            bulletRect.left >= obstacleRect.left &&
+            bulletRect.right <= obstacleRect.right &&
+            bulletRect.top >= obstacleRect.top &&
+            bulletRect.bottom <= obstacleRect.bottom
+          ) {
+            obstacle.remove();
+            bullet.remove();
+            score += 10;
+            scoreDisplay.textContent = score;
+          }
+        });
+      }, 10);
+    }
+  });
+
+  function createObstacle() {
+    const obstacle = document.createElement('div');
+    obstacle.classList.add('obstacle');
+    obstacle.style.left = Math.floor(Math.random() * (scene.offsetWidth / 2 - 20)) + (scene.offsetWidth / 2) + 'px';
+    obstacle.style.top = '0';
+    scene.appendChild(obstacle);
+    
+    const obstacleMove = setInterval(() => {
+      const obstacleRect = obstacle.getBoundingClientRect();
+      if (obstacleRect.bottom >= scene.offsetHeight) {
+        clearInterval(obstacleMove);
+        obstacle.remove();
+      } else {
+        obstacle.style.top = (obstacleRect.top + 5) + 'px';
+      }
+    }, 100);
+  }
+
+  setInterval(createObstacle, 2000);
+</script>
+</body>
+</html>
